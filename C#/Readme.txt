@@ -1,4 +1,0 @@
-注意事项
-1.Cryptography.cs文件封装了AES加解密过程，使用者无须关心具体实现。BizMsgCrypt.cs文件提供了用户接入我公司的三个接口，Program.cs文件提供了如何使用这三个接口的示例。
-2.BizMsgCrypt.cs封装了VerifyURL, DecryptMsg, EncryptMsg三个接口，分别用于开发者验证回调url，收到用户回复消息的解密以及开发者回复消息的加密过程。使用方法可以参考Sample.cs文件。
-3.加解密协议请参考官方文档。
