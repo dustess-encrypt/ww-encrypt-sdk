@@ -60,15 +60,15 @@ namespace crypt
             Array.Copy(Key, Iv, 16);
             string Randcode = CreateRandCode(16);
             byte[] bRand = Encoding.UTF8.GetBytes(Randcode);
-            byte[] bCorpid = Encoding.UTF8.GetBytes(companyId);
+            byte[] bCompanyId = Encoding.UTF8.GetBytes(companyId);
             byte[] btmpMsg = Encoding.UTF8.GetBytes(Input);
             byte[] bMsgLen = BitConverter.GetBytes(HostToNetworkOrder(btmpMsg.Length));
-            byte[] bMsg = new byte[bRand.Length + bMsgLen.Length + bCorpid.Length + btmpMsg.Length];
+            byte[] bMsg = new byte[bRand.Length + bMsgLen.Length + bCompanyId.Length + btmpMsg.Length];
 
             Array.Copy(bRand, bMsg, bRand.Length);
             Array.Copy(bMsgLen, 0, bMsg, bRand.Length, bMsgLen.Length);
             Array.Copy(btmpMsg, 0, bMsg, bRand.Length + bMsgLen.Length, btmpMsg.Length);
-            Array.Copy(bCorpid, 0, bMsg, bRand.Length + bMsgLen.Length + btmpMsg.Length, bCorpid.Length);
+            Array.Copy(bCompanyId, 0, bMsg, bRand.Length + bMsgLen.Length + btmpMsg.Length, bCompanyId.Length);
 
             return AES_encrypt(bMsg, Iv, Key);
 

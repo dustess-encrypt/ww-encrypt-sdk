@@ -4,25 +4,25 @@ using System.Collections;
 using System.Security.Cryptography;
 namespace crypt
 {
-    class WXBizMsgCrypt
+    class BizMsgCrypt
     {
         string m_sToken;
         string m_sEncodingAESKey;
         string m_companyId;
 
-        enum WXBizMsgCryptErrorCode
+        enum BizMsgCryptErrorCode
         {
-            WXBizMsgCrypt_OK = 0,
-            WXBizMsgCrypt_ValidateSignature_Error = -40001,
-            WXBizMsgCrypt_ParseXml_Error = -40002,
-            WXBizMsgCrypt_ComputeSignature_Error = -40003,
-            WXBizMsgCrypt_IllegalAesKey = -40004,
-            WXBizMsgCrypt_ValidateCompanyId_Error = -40005,
-            WXBizMsgCrypt_EncryptAES_Error = -40006,
-            WXBizMsgCrypt_DecryptAES_Error = -40007,
-            WXBizMsgCrypt_IllegalBuffer = -40008,
-            WXBizMsgCrypt_EncodeBase64_Error = -40009,
-            WXBizMsgCrypt_DecodeBase64_Error = -40010
+            BizMsgCrypt_OK = 0,
+            BizMsgCrypt_ValidateSignature_Error = -40001,
+            BizMsgCrypt_ParseXml_Error = -40002,
+            BizMsgCrypt_ComputeSignature_Error = -40003,
+            BizMsgCrypt_IllegalAesKey = -40004,
+            BizMsgCrypt_ValidateCompanyId_Error = -40005,
+            BizMsgCrypt_EncryptAES_Error = -40006,
+            BizMsgCrypt_DecryptAES_Error = -40007,
+            BizMsgCrypt_IllegalBuffer = -40008,
+            BizMsgCrypt_EncodeBase64_Error = -40009,
+            BizMsgCrypt_DecodeBase64_Error = -40010
         };
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace crypt
         /// <param name="sToken">token</param>
         /// <param name="companyId">公司ID</param>
         /// <param name="sEncodingAESKey">密钥</param>
-        public WXBizMsgCrypt(string sToken, string companyId, string sEncodingAESKey)
+        public BizMsgCrypt(string sToken, string companyId, string sEncodingAESKey)
         {
             m_sToken = sToken;
             m_sEncodingAESKey = sEncodingAESKey;
@@ -52,7 +52,7 @@ namespace crypt
             int ret = 0;
             if (m_sEncodingAESKey.Length != 43)
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_IllegalAesKey;
             }
             ret = VerifySignature(m_sToken, sTimeStamp, sNonce, sEchoStr, sMsgSignature);
             if (0 != ret)
@@ -68,12 +68,12 @@ namespace crypt
             catch (Exception)
             {
                 sReplyEchoStr = "";
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecryptAES_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_DecryptAES_Error;
             }
             if (companyId != m_companyId)
             {
                 sReplyEchoStr = "";
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateCompanyId_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateCompanyId_Error;
             }
             return 0;
         }
@@ -91,7 +91,7 @@ namespace crypt
         {
             if (m_sEncodingAESKey.Length != 43)
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_IllegalAesKey;
             }
 
             // 反序列化数据
@@ -109,15 +109,15 @@ namespace crypt
             catch (FormatException)
             {
                 sMsg = "";
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecodeBase64_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_DecodeBase64_Error;
             }
             catch (Exception)
             {
                 sMsg = "";
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecryptAES_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_DecryptAES_Error;
             }
             if (companyId != m_companyId)
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateCompanyId_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateCompanyId_Error;
             return 0;
         }
 
@@ -134,7 +134,7 @@ namespace crypt
             var sNonce = util.GetRandomString(16);
             if (m_sEncodingAESKey.Length != 43)
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_IllegalAesKey;
             }
 
             string raw = "";
@@ -144,7 +144,7 @@ namespace crypt
             }
             catch (Exception)
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_EncryptAES_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_EncryptAES_Error;
             }
 
             string MsgSigature = "";
@@ -201,7 +201,7 @@ namespace crypt
                 return 0;
             else
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateSignature_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateSignature_Error;
             }
         }
 
@@ -233,7 +233,7 @@ namespace crypt
             }
             catch (Exception)
             {
-                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ComputeSignature_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ComputeSignature_Error;
             }
             sMsgSignature = hash;
             return 0;

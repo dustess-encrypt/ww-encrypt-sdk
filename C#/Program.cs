@@ -14,7 +14,7 @@ namespace crypt
             string sToken = "thisisatoken";
             string companyId = "P00000000023";
             string sEncodingAESKey = "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C";
-            var wxcpt = new WXBizMsgCrypt(sToken, companyId, sEncodingAESKey);
+            var cpt = new BizMsgCrypt(sToken, companyId, sEncodingAESKey);
 
             /*
 			------------使用示例1：消息解密---------------
@@ -29,7 +29,7 @@ namespace crypt
             string sReqNonce = "fKFadfQepSA7Y6cX";
             string sReqData = "{\"Signature\":\"1c4bb9c4f152249c8c82c8bef37c764a5387ebcc\",\"Encrypt\":\"8DXg6XnAihaz7+VMxRCTE53Y7tWQ4JCgQYBCugaHBMwls0FcmRaRiK1wbNRCpM3Cn3kTF+BOAn/uedl4fa6Okw==\",\"Timestamp\":\"1593335246\",\"Nonce\":\"fKFadfQepSA7Y6cX\"}";
             string sMsg = "";  // 解析之后的明文
-            var ret = wxcpt.DecryptMsg(sReqMsgSig, sReqTimeStamp, sReqNonce, sReqData, ref sMsg);
+            var ret = cpt.DecryptMsg(sReqMsgSig, sReqTimeStamp, sReqNonce, sReqData, ref sMsg);
             if (ret != 0)
             {
                 System.Console.WriteLine("ERR: Decrypt Fail, ret: " + ret);
@@ -46,11 +46,11 @@ namespace crypt
              2.将明文加密得到密文。	
              3.用密文，步骤1生成的包括消息体签名(Signature)，时间戳(Timestamp)以及随机数字串(Nonce)生成消息体签名。			
              4.将密文，消息体签名，时间戳，随机数字串拼接成json格式的字符串，发送给企业。
-             以上2，3，4步可以用尘封信息提供的库函数EncryptMsg来实现。
+             以上2，3，4步可以用我们提供的库函数EncryptMsg来实现。
              */
             string sEncryptMsg = "{\"Name\":\"张三\",\"Age\":180}"; //原文
             string resp="";// 加密后的秘文，里面包含时间戳，随机串，签名等数据
-            ret = wxcpt.EncryptMsg(sEncryptMsg,  ref resp);
+            ret = cpt.EncryptMsg(sEncryptMsg,  ref resp);
             if (ret != 0)
             {
                 System.Console.WriteLine("ERR: EncryptMsg Fail, ret: " + ret);
@@ -60,22 +60,22 @@ namespace crypt
 
             /*
 			------------使用示例3：验证回调URL---------------
-			*企业开启回调模式时，尘封信息会向验证url发送一个get请求 
+			*企业开启回调模式时，会向验证url发送一个get请求 
 			假设点击验证时，企业收到类似请求：
 			* GET /dustess/push?Signature=1c4bb9c4f152249c8c82c8bef37c764a5387ebcc&Timestamp=1593335246&Nonce=fKFadfQepSA7Y6cX&Encrypt=8DXg6XnAihaz7+VMxRCTE53Y7tWQ4JCgQYBCugaHBMwls0FcmRaRiK1wbNRCpM3Cn3kTF+BOAn/uedl4fa6Okw== 
 			* HTTP/1.1 Host: mk.dustess.com
 			* 接收到该请求时，请求之后解析出url上的参数，包括消息体签名(Signature)，时间戳(Timestamp)以及随机数字串(Nonce)，以及加密字符串（Encrypt）
 			这一步注意作URL解码。
 			2.验证消息体签名的正确性 
-			3.解密出Encrypt原文，将原文当作Get请求的response，返回给尘封信息
-			第2，3步可以用尘封信息提供的库函数VerifyURL来实现。
+			3.解密出Encrypt原文，将原文当作Get请求的response返回
+			第2，3步可以用我们提供的库函数VerifyURL来实现。
 			*/
             string sVerifyMsgSig = "1c4bb9c4f152249c8c82c8bef37c764a5387ebcc";
             string sVerifyTimeStamp = "1593335246";
             string sVerifyNonce = "fKFadfQepSA7Y6cX";
             string sVerifyEchoStr = "8DXg6XnAihaz7+VMxRCTE53Y7tWQ4JCgQYBCugaHBMwls0FcmRaRiK1wbNRCpM3Cn3kTF+BOAn/uedl4fa6Okw==";
             string sEchoStr = "";
-            ret = wxcpt.VerifyURL(sVerifyMsgSig, sVerifyTimeStamp, sVerifyNonce, sVerifyEchoStr, ref sEchoStr);
+            ret = cpt.VerifyURL(sVerifyMsgSig, sVerifyTimeStamp, sVerifyNonce, sVerifyEchoStr, ref sEchoStr);
             if (ret != 0)
             {
                 System.Console.WriteLine("ERR: VerifyURL fail, ret: " + ret);
