@@ -1,0 +1,282 @@
+﻿using System;
+using System.Text;
+using System.Collections;
+using System.Security.Cryptography;
+namespace crypt
+{
+    class WXBizMsgCrypt
+    {
+        string m_sToken;
+        string m_sEncodingAESKey;
+        string m_companyId;
+
+        enum WXBizMsgCryptErrorCode
+        {
+            WXBizMsgCrypt_OK = 0,
+            WXBizMsgCrypt_ValidateSignature_Error = -40001,
+            WXBizMsgCrypt_ParseXml_Error = -40002,
+            WXBizMsgCrypt_ComputeSignature_Error = -40003,
+            WXBizMsgCrypt_IllegalAesKey = -40004,
+            WXBizMsgCrypt_ValidateCompanyId_Error = -40005,
+            WXBizMsgCrypt_EncryptAES_Error = -40006,
+            WXBizMsgCrypt_DecryptAES_Error = -40007,
+            WXBizMsgCrypt_IllegalBuffer = -40008,
+            WXBizMsgCrypt_EncodeBase64_Error = -40009,
+            WXBizMsgCrypt_DecodeBase64_Error = -40010
+        };
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="sToken">token</param>
+        /// <param name="companyId">公司ID</param>
+        /// <param name="sEncodingAESKey">密钥</param>
+        public WXBizMsgCrypt(string sToken, string companyId, string sEncodingAESKey)
+        {
+            m_sToken = sToken;
+            m_sEncodingAESKey = sEncodingAESKey;
+            m_companyId = companyId;
+        }
+
+        /// <summary>
+        /// 验证url
+        /// </summary>
+        /// <param name="sMsgSignature">签名串，对应URL的Signature参数</param>
+        /// <param name="sTimeStamp">时间戳，对应URL的Timestamp</param>
+        /// <param name="sNonce">随机串，对应URL的Nonce</param>
+        /// <param name="sEchoStr">随机串，对应URL参数的echostr</param>
+        /// <param name="sReplyEchoStr">解密之后的数据</param>
+        /// <returns></returns>
+        public int VerifyURL(string sMsgSignature, string sTimeStamp, string sNonce, string sEchoStr, ref string sReplyEchoStr)
+        {
+            int ret = 0;
+            if (m_sEncodingAESKey.Length != 43)
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+            }
+            ret = VerifySignature(m_sToken, sTimeStamp, sNonce, sEchoStr, sMsgSignature);
+            if (0 != ret)
+            {
+                return ret;
+            }
+            sReplyEchoStr = "";
+            string companyId = "";
+            try
+            {
+                sReplyEchoStr = Cryptography.AES_decrypt(sEchoStr, m_sEncodingAESKey, ref companyId); //m_sReceiveId);
+            }
+            catch (Exception)
+            {
+                sReplyEchoStr = "";
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecryptAES_Error;
+            }
+            if (companyId != m_companyId)
+            {
+                sReplyEchoStr = "";
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateCompanyId_Error;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// 消息解密
+        /// </summary>
+        /// <param name="sMsgSignature">签名</param>
+        /// <param name="sTimeStamp">时间戳</param>
+        /// <param name="sNonce">随机字符</param>
+        /// <param name="sPostData">密文</param>
+        /// <param name="sMsg">解密后的原文，当return返回0时有效</param>
+        /// <returns>成功0，失败返回对应的错误码</returns>
+        public int DecryptMsg(string sMsgSignature, string sTimeStamp, string sNonce, string sPostData, ref string sMsg)
+        {
+            if (m_sEncodingAESKey.Length != 43)
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+            }
+
+            // 反序列化数据
+            var msg = util.Deserialize<BizMsg4Recv>(sPostData);
+            var ret = 0;
+            ret = VerifySignature(m_sToken, sTimeStamp, sNonce, msg.Encrypt, sMsgSignature);
+            if (ret != 0)
+                return ret;
+
+            string companyId = "";
+            try
+            {
+                sMsg = Cryptography.AES_decrypt(msg.Encrypt, m_sEncodingAESKey, ref companyId);
+            }
+            catch (FormatException)
+            {
+                sMsg = "";
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecodeBase64_Error;
+            }
+            catch (Exception)
+            {
+                sMsg = "";
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_DecryptAES_Error;
+            }
+            if (companyId != m_companyId)
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateCompanyId_Error;
+            return 0;
+        }
+
+        /// <summary>
+        /// 消息加密
+        /// </summary>
+        /// <param name="sReplyMsg">待加密的字符串</param>
+        /// <param name="sEncryptMsg">加密后的密文</param>
+        /// <returns>成功0，失败返回对应的错误码</returns>
+        public int EncryptMsg(string sReplyMsg, ref string sEncryptMsg)
+        {
+            // 获取时间戳和随机字符串
+            var sTimeStamp = util.GetTimeStamp();
+            var sNonce = util.GetRandomString(16);
+            if (m_sEncodingAESKey.Length != 43)
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_IllegalAesKey;
+            }
+
+            string raw = "";
+            try
+            {
+                raw = Cryptography.AES_encrypt(sReplyMsg, m_sEncodingAESKey, m_companyId);
+            }
+            catch (Exception)
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_EncryptAES_Error;
+            }
+
+            string MsgSigature = "";
+            int ret = 0;
+            ret = GenarateSinature(m_sToken, sTimeStamp, sNonce, raw, ref MsgSigature);
+            if (0 != ret)
+                return ret;
+            var send = new BizMsg4Send(MsgSigature, raw, sTimeStamp, sNonce);
+            sEncryptMsg = util.Serialize(send);
+
+            return 0;
+        }
+
+        public class DictionarySort : System.Collections.IComparer
+        {
+            public int Compare(object oLeft, object oRight)
+            {
+                string sLeft = oLeft as string;
+                string sRight = oRight as string;
+                int iLeftLength = sLeft.Length;
+                int iRightLength = sRight.Length;
+                int index = 0;
+                while (index < iLeftLength && index < iRightLength)
+                {
+                    if (sLeft[index] < sRight[index])
+                        return -1;
+                    else if (sLeft[index] > sRight[index])
+                        return 1;
+                    else
+                        index++;
+                }
+                return iLeftLength - iRightLength;
+
+            }
+        }
+
+        /// <summary>
+        /// 验证签名
+        /// </summary>
+        /// <param name="sToken">token</param>
+        /// <param name="sTimeStamp">时间戳</param>
+        /// <param name="sNonce">随机字符串</param>
+        /// <param name="sMsgEncrypt"></param>
+        /// <param name="sSigture">前面</param>
+        /// <returns></returns>
+        private static int VerifySignature(string sToken, string sTimeStamp, string sNonce, string sMsgEncrypt, string sSigture)
+        {
+            string hash = "";
+            int ret = 0;
+            ret = GenarateSinature(sToken, sTimeStamp, sNonce, sMsgEncrypt, ref hash);
+            if (ret != 0)
+                return ret;
+            if (hash == sSigture)
+                return 0;
+            else
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ValidateSignature_Error;
+            }
+        }
+
+        public static int GenarateSinature(string sToken, string sTimeStamp, string sNonce, string sMsgEncrypt, ref string sMsgSignature)
+        {
+            ArrayList AL = new ArrayList();
+            AL.Add(sToken);
+            AL.Add(sTimeStamp);
+            AL.Add(sNonce);
+            AL.Add(sMsgEncrypt);
+            AL.Sort(new DictionarySort());
+            string raw = "";
+            for (int i = 0; i < AL.Count; ++i)
+            {
+                raw += AL[i];
+            }
+
+            SHA1 sha;
+            ASCIIEncoding enc;
+            string hash = "";
+            try
+            {
+                sha = new SHA1CryptoServiceProvider();
+                enc = new ASCIIEncoding();
+                byte[] dataToHash = enc.GetBytes(raw);
+                byte[] dataHashed = sha.ComputeHash(dataToHash);
+                hash = BitConverter.ToString(dataHashed).Replace("-", "");
+                hash = hash.ToLower();
+            }
+            catch (Exception)
+            {
+                return (int)WXBizMsgCryptErrorCode.WXBizMsgCrypt_ComputeSignature_Error;
+            }
+            sMsgSignature = hash;
+            return 0;
+        }
+    }
+}
+
+
+class BizMsg4Recv
+{
+    // 消息类型
+    public String MsgType;
+
+    // 密文
+    public String Encrypt;
+}
+
+class BizMsg4Send
+{
+    // 签名串，对应URL的Signature参数
+    public String Signature;
+
+    // 密文
+    public String Encrypt;
+
+    // 时间戳
+    public String Timestamp;
+
+    // 随机串
+    public String Nonce;
+
+    /// <summary>
+    /// 构造方法
+    /// </summary>
+    /// <param name="signature">签名串，对应URL的Signature参数</param>
+    /// <param name="encrypt">密文</param>
+    /// <param name="timeStamp">时间戳</param>
+    /// <param name="nonce">随机字符串</param>
+    public BizMsg4Send(string signature, string encrypt, string timeStamp, string nonce)
+    {
+        this.Encrypt = encrypt;
+        this.Signature = signature;
+        this.Timestamp = timeStamp;
+        this.Nonce = nonce;
+    }
+}
