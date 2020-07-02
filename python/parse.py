@@ -171,12 +171,12 @@ class Prpcrypt:
 
 class WXBizMsgCrypt:
     # 构造函数
-    def __init__(self, token: str, aes_key: str, company_id: str):
+    def __init__(self, token: str, aes_key: str, receive_id: str):
         """
 
         :param token:  token
         :param aes_key: aes 密匙
-        :param company_id:   公司
+        :param receive_id:   公司
         """
         try:
             self.key = base64.b64decode(aes_key + "=")
@@ -185,7 +185,7 @@ class WXBizMsgCrypt:
             throw_exception("[error]: aes_key unvalid !", FormatException)
             # return ierror.WXBizMsgCrypt_IllegalAesKey,None
         self.m_sToken = token
-        self.company_id = company_id
+        self.receive_id = receive_id
 
     def VerifyURL(self, sMsgSignature: str, sTimeStamp: str, sNonce: str, sEchoStr: str) -> (int, str):
         """
@@ -205,7 +205,7 @@ class WXBizMsgCrypt:
         if not signature == sMsgSignature:
             return ierror.WXBizMsgCrypt_ValidateSignature_Error, None
         pc = Prpcrypt(self.key)
-        ret, sReplyEchoStr = pc.decrypt(sEchoStr, self.company_id)
+        ret, sReplyEchoStr = pc.decrypt(sEchoStr, self.receive_id)
         return ret, sReplyEchoStr
 
     def EncryptMsg(self, data: str, sNonce: str = None, timestamp: str = None) -> (int, MsgData):
@@ -217,7 +217,7 @@ class WXBizMsgCrypt:
         :return:
         """
         pc = Prpcrypt(self.key)
-        ret, encrypt = pc.encrypt(data, self.company_id)
+        ret, encrypt = pc.encrypt(data, self.receive_id)
         encrypt = encrypt.decode('utf8')
         if ret != 0:
             return ret, None
@@ -262,5 +262,5 @@ class WXBizMsgCrypt:
         if not signature == sMsgSignature:
             return ierror.WXBizMsgCrypt_ValidateSignature_Error, None
         pc = Prpcrypt(self.key)
-        ret, xml_content = pc.decrypt(encrypt, self.company_id)
+        ret, xml_content = pc.decrypt(encrypt, self.receive_id)
         return ret, xml_content

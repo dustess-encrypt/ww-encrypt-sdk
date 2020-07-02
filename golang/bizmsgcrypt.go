@@ -23,7 +23,7 @@ const (
 	ParseXmlError          int = -40002
 	ComputeSignatureError  int = -40003
 	IllegalAesKey          int = -40004
-	ValidateCompanyIdError int = -40005
+	ValidateReceiveIdError int = -40005
 	EncryptAESError        int = -40006
 	DecryptAESError        int = -40007
 	IllegalBuffer          int = -40008
@@ -80,7 +80,7 @@ type ProtocolProcessor interface {
 type BizMsgCrypt struct {
 	token             string
 	encodingAesKey    string
-	companyId         string
+	receiveId         string
 	protocolProcessor ProtocolProcessor
 }
 
@@ -105,7 +105,7 @@ func (p *Processor) serialize(msg4Send *BizMsg4Send) ([]byte, *Error) {
 }
 
 // NewBizMsgCrypt 新建加解密对象
-func NewBizMsgCrypt(token, encodingAesKey, companyId string, protocolType ProtocolType) *BizMsgCrypt {
+func NewBizMsgCrypt(token, encodingAesKey, receiveId string, protocolType ProtocolType) *BizMsgCrypt {
 	var protocolProcessor ProtocolProcessor
 	if protocolType != JsonType {
 		panic("unsupport protocal")
@@ -113,7 +113,7 @@ func NewBizMsgCrypt(token, encodingAesKey, companyId string, protocolType Protoc
 		protocolProcessor = new(Processor)
 	}
 
-	return &BizMsgCrypt{token: token, encodingAesKey: encodingAesKey + "=", companyId: companyId, protocolProcessor: protocolProcessor}
+	return &BizMsgCrypt{token: token, encodingAesKey: encodingAesKey + "=", receiveId: receiveId, protocolProcessor: protocolProcessor}
 }
 
 // randString 随机字符串
@@ -236,9 +236,9 @@ func (c *BizMsgCrypt) ParsePlainText(plainText []byte) ([]byte, uint32, []byte, 
 	}
 
 	msg := plainText[20 : 20+msgLen]
-	companyId := plainText[20+msgLen:]
+	receiveId := plainText[20+msgLen:]
 
-	return random, msgLen, msg, companyId, nil
+	return random, msgLen, msg, receiveId, nil
 }
 
 // VerifyURL 验证回调URL
@@ -254,14 +254,14 @@ func (c *BizMsgCrypt) VerifyURL(msgSignature, timestamp, nonce, echoStr string) 
 		return nil, err
 	}
 
-	_, _, msg, companyId, err := c.ParsePlainText(plainText)
+	_, _, msg, receiveId, err := c.ParsePlainText(plainText)
 	if nil != err {
 		return nil, err
 	}
 
-	if len(c.companyId) > 0 && strings.Compare(string(companyId), c.companyId) != 0 {
-		fmt.Println(string(companyId), c.companyId, len(companyId), len(c.companyId))
-		return nil, NewCryptError(ValidateCompanyIdError, "companyId is not equal")
+	if len(c.receiveId) > 0 && strings.Compare(string(receiveId), c.receiveId) != 0 {
+		fmt.Println(string(receiveId), c.receiveId, len(receiveId), len(c.receiveId))
+		return nil, NewCryptError(ValidateReceiveIdError, "ReceiveId is not equal")
 	}
 
 	return msg, nil
@@ -279,7 +279,7 @@ func (c *BizMsgCrypt) EncryptMsg(replyMsg string) (*BizMsg4Send, *Error) {
 	binary.BigEndian.PutUint32(msgLenBuf, uint32(len(replyMsg)))
 	buffer.Write(msgLenBuf)
 	buffer.WriteString(replyMsg)
-	buffer.WriteString(c.companyId)
+	buffer.WriteString(c.receiveId)
 
 	tmpCipherText, err := c.cbcEncryptors(buffer.String())
 	if nil != err {
@@ -310,13 +310,13 @@ func (c *BizMsgCrypt) DecryptMsg(msgSignature, timestamp, nonce string, postData
 		return nil, cryptErr
 	}
 
-	_, _, msg, companyId, cryptErr := c.ParsePlainText(plaintext)
+	_, _, msg, receiveId, cryptErr := c.ParsePlainText(plaintext)
 	if nil != cryptErr {
 		return nil, cryptErr
 	}
 
-	if len(c.companyId) > 0 && strings.Compare(string(companyId), c.companyId) != 0 {
-		return nil, NewCryptError(ValidateCompanyIdError, "companyId is not equal")
+	if len(c.receiveId) > 0 && strings.Compare(string(receiveId), c.receiveId) != 0 {
+		return nil, NewCryptError(ValidateReceiveIdError, "ReceiveId is not equal")
 	}
 
 	return msg, nil
@@ -324,7 +324,7 @@ func (c *BizMsgCrypt) DecryptMsg(msgSignature, timestamp, nonce string, postData
 
 // BaseContent 消息基础字段
 type BaseContent struct {
-	CompanyID string `json:"companyId"` // 公司ID
+	ReceiveId string `json:"receiveId"` // 公司ID
 	MsgType   string `json:"msgType"`   // add_customer|edit_customer|add_user|edit_user
 }
 

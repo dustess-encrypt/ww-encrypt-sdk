@@ -12,9 +12,9 @@ namespace crypt
         {
 
             string sToken = "thisisatoken";
-            string companyId = "P00000000023";
+            string reviceId = "P00000000023";
             string sEncodingAESKey = "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C";
-            var cpt = new BizMsgCrypt(sToken, companyId, sEncodingAESKey);
+            var cpt = new BizMsgCrypt(sToken, reviceId, sEncodingAESKey);
 
             /*
 			------------使用示例1：消息解密---------------

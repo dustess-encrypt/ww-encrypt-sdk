@@ -8,7 +8,7 @@ namespace crypt
     {
         string m_sToken;
         string m_sEncodingAESKey;
-        string m_companyId;
+        string m_receiveId;
 
         enum BizMsgCryptErrorCode
         {
@@ -17,7 +17,7 @@ namespace crypt
             BizMsgCrypt_ParseXml_Error = -40002,
             BizMsgCrypt_ComputeSignature_Error = -40003,
             BizMsgCrypt_IllegalAesKey = -40004,
-            BizMsgCrypt_ValidateCompanyId_Error = -40005,
+            BizMsgCrypt_ValidateReceiveId_Error = -40005,
             BizMsgCrypt_EncryptAES_Error = -40006,
             BizMsgCrypt_DecryptAES_Error = -40007,
             BizMsgCrypt_IllegalBuffer = -40008,
@@ -29,13 +29,13 @@ namespace crypt
         /// 构造函数
         /// </summary>
         /// <param name="sToken">token</param>
-        /// <param name="companyId">公司ID</param>
+        /// <param name="receiveId">公司ID</param>
         /// <param name="sEncodingAESKey">密钥</param>
-        public BizMsgCrypt(string sToken, string companyId, string sEncodingAESKey)
+        public BizMsgCrypt(string sToken, string receiveId, string sEncodingAESKey)
         {
             m_sToken = sToken;
             m_sEncodingAESKey = sEncodingAESKey;
-            m_companyId = companyId;
+            m_receiveId = receiveId;
         }
 
         /// <summary>
@@ -60,20 +60,20 @@ namespace crypt
                 return ret;
             }
             sReplyEchoStr = "";
-            string companyId = "";
+            string receiveId = "";
             try
             {
-                sReplyEchoStr = Cryptography.AES_decrypt(sEchoStr, m_sEncodingAESKey, ref companyId); //m_sReceiveId);
+                sReplyEchoStr = Cryptography.AES_decrypt(sEchoStr, m_sEncodingAESKey, ref receiveId); //m_sReceiveId);
             }
             catch (Exception)
             {
                 sReplyEchoStr = "";
                 return (int)BizMsgCryptErrorCode.BizMsgCrypt_DecryptAES_Error;
             }
-            if (companyId != m_companyId)
+            if (receiveId != m_receiveId)
             {
                 sReplyEchoStr = "";
-                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateCompanyId_Error;
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateReceiveId_Error;
             }
             return 0;
         }
@@ -101,10 +101,10 @@ namespace crypt
             if (ret != 0)
                 return ret;
 
-            string companyId = "";
+            string reviceId = "";
             try
             {
-                sMsg = Cryptography.AES_decrypt(msg.Encrypt, m_sEncodingAESKey, ref companyId);
+                sMsg = Cryptography.AES_decrypt(msg.Encrypt, m_sEncodingAESKey, ref reviceId);
             }
             catch (FormatException)
             {
@@ -116,8 +116,8 @@ namespace crypt
                 sMsg = "";
                 return (int)BizMsgCryptErrorCode.BizMsgCrypt_DecryptAES_Error;
             }
-            if (companyId != m_companyId)
-                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateCompanyId_Error;
+            if (reviceId != m_receiveId)
+                return (int)BizMsgCryptErrorCode.BizMsgCrypt_ValidateReceiveId_Error;
             return 0;
         }
 
@@ -140,7 +140,7 @@ namespace crypt
             string raw = "";
             try
             {
-                raw = Cryptography.AES_encrypt(sReplyMsg, m_sEncodingAESKey, m_companyId);
+                raw = Cryptography.AES_encrypt(sReplyMsg, m_sEncodingAESKey, m_receiveId);
             }
             catch (Exception)
             {

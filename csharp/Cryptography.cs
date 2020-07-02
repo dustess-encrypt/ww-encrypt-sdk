@@ -30,7 +30,7 @@ namespace crypt
         /// <param name="EncodingAESKey"></param>
         /// <returns></returns>
         /// 
-        public static string AES_decrypt(String Input, string EncodingAESKey, ref string companyId)
+        public static string AES_decrypt(String Input, string EncodingAESKey, ref string receiveId)
         {
             byte[] Key;
             Key = Convert.FromBase64String(EncodingAESKey + "=");
@@ -43,16 +43,16 @@ namespace crypt
 
 
             byte[] bMsg = new byte[len];
-            byte[] bcompanyId = new byte[btmpMsg.Length - 20 - len];
+            byte[] breceiveId = new byte[btmpMsg.Length - 20 - len];
             Array.Copy(btmpMsg, 20, bMsg, 0, len);
-            Array.Copy(btmpMsg, 20 + len, bcompanyId, 0, btmpMsg.Length - 20 - len);
+            Array.Copy(btmpMsg, 20 + len, breceiveId, 0, btmpMsg.Length - 20 - len);
             string oriMsg = Encoding.UTF8.GetString(bMsg);
-            companyId = Encoding.UTF8.GetString(bcompanyId);
+            receiveId = Encoding.UTF8.GetString(breceiveId);
 
             return oriMsg;
         }
 
-        public static String AES_encrypt(String Input, string EncodingAESKey, string companyId)
+        public static String AES_encrypt(String Input, string EncodingAESKey, string receiveId)
         {
             byte[] Key;
             Key = Convert.FromBase64String(EncodingAESKey + "=");
@@ -60,15 +60,15 @@ namespace crypt
             Array.Copy(Key, Iv, 16);
             string Randcode = CreateRandCode(16);
             byte[] bRand = Encoding.UTF8.GetBytes(Randcode);
-            byte[] bCompanyId = Encoding.UTF8.GetBytes(companyId);
+            byte[] breceiveId = Encoding.UTF8.GetBytes(receiveId);
             byte[] btmpMsg = Encoding.UTF8.GetBytes(Input);
             byte[] bMsgLen = BitConverter.GetBytes(HostToNetworkOrder(btmpMsg.Length));
-            byte[] bMsg = new byte[bRand.Length + bMsgLen.Length + bCompanyId.Length + btmpMsg.Length];
+            byte[] bMsg = new byte[bRand.Length + bMsgLen.Length + breceiveId.Length + btmpMsg.Length];
 
             Array.Copy(bRand, bMsg, bRand.Length);
             Array.Copy(bMsgLen, 0, bMsg, bRand.Length, bMsgLen.Length);
             Array.Copy(btmpMsg, 0, bMsg, bRand.Length + bMsgLen.Length, btmpMsg.Length);
-            Array.Copy(bCompanyId, 0, bMsg, bRand.Length + bMsgLen.Length + btmpMsg.Length, bCompanyId.Length);
+            Array.Copy(breceiveId, 0, bMsg, bRand.Length + bMsgLen.Length + btmpMsg.Length, breceiveId.Length);
 
             return AES_encrypt(bMsg, Iv, Key);
 

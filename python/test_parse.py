@@ -17,10 +17,10 @@ class TestAES(TestCase):
     token = "thisisatoken"
     aes_key = "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"
     input = "hello world 哈喽 "
-    company_id = "P00000000023"
+    receive_id = "P00000000023"
 
     def crypt(self):
-        return WXBizMsgCrypt(self.token, self.aes_key, self.company_id)
+        return WXBizMsgCrypt(self.token, self.aes_key, self.receive_id)
 
     def test_encode(self):
         """

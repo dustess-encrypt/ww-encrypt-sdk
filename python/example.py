@@ -6,13 +6,13 @@ from ierror import WXBizMsgCrypt_OK
 # 配置
 token = "thisisatoken"
 aes_key = "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"
-company_id = "P00000000023"
+receive_id = "P00000000023"
 
 if __name__ == '__main__':
     # 加密 然后解密
     send_msg = "hello你好，我是数据发送方 world!"
     # 初始化配置
-    crypt = WXBizMsgCrypt(token, aes_key, company_id)
+    crypt = WXBizMsgCrypt(token, aes_key, receive_id)
     # 加密
     ret, msg_data = crypt.EncryptMsg(send_msg)
     assert ret == WXBizMsgCrypt_OK, f"加密失败{ret}"

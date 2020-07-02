@@ -15,7 +15,7 @@ public enum BizErrorCodeEnum implements ErrorCode {
   ParseJsonError(-40003, "JSON解析失败"),
   ComputeSignatureError(-40004, "sha加密生成签名失败"),
   IllegalAesKey(-40005, "SymmetricKey非法"),
-  ValidateCompanyIdError(-40006, "companyId校验失败"),
+  ValidateReceiveIdError(-40006, "receiveId校验失败"),
   EncryptAESError(-40007, "aes加密失败"),
   DecryptAESError(-40008, "aes解密失败"),
   IllegalBuffer(-40009, "解密后得到的buffer非法"),

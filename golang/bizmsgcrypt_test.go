@@ -9,9 +9,9 @@ import (
 func TestBizMsgCrypt_EncryptMsg(t *testing.T) {
 	token := "thisisatoken"
 	encodingAesKey := "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"
-	companyId := "P00000000023"
+	receiveId := "P00000000023"
 
-	crypt := NewBizMsgCrypt(token, encodingAesKey, companyId, JsonType)
+	crypt := NewBizMsgCrypt(token, encodingAesKey, receiveId, JsonType)
 
 	type Msg struct{
 		Name string
@@ -35,9 +35,9 @@ func TestBizMsgCrypt_EncryptMsg(t *testing.T) {
 func TestBizMsgCrypt_DecryptMsg(t *testing.T) {
 	token := "thisisatoken"
 	encodingAesKey := "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"
-	companyId := "P00000000023"
+	receiveId := "P00000000023"
 
-	crypt := NewBizMsgCrypt(token, encodingAesKey, companyId, JsonType)
+	crypt := NewBizMsgCrypt(token, encodingAesKey, receiveId, JsonType)
 	recv := BizMsg4Recv{
 		MsgType: "add_customer",
 		Encrypt: "CZWs4CWRpI4VolQlvn4dlHCxcccOUldh2dM/HUHjz9lmXN+DbNparH5f3mPPDG0EBhuCYhE+vJ5SXkNCcAN7jg==",
@@ -63,8 +63,8 @@ func TestBizMsgCrypt_DecryptMsg(t *testing.T) {
 func TestBizMsgCrypt_VerifyURL(t *testing.T) {
 	token := "thisisatoken"
 	encodingAesKey := "jWmYm7qr5nMoAUwZRjGtBxmz3KA1tkAj3ykkR6q2B2C"
-	companyId := "P00000000023"
-	crypt := NewBizMsgCrypt(token, encodingAesKey, companyId, JsonType)
+	receiveId := "P00000000023"
+	crypt := NewBizMsgCrypt(token, encodingAesKey, receiveId, JsonType)
 	/*
 
 		先用加密获取到消息体签名（msgSignature）、时间戳(timestamp)、随机数字串(nonce)、数据加密字符串(echostr)

@@ -30,22 +30,22 @@ public class BizMsgCrypt {
 	Base64 base64 = new Base64();
 	byte[] aesKey;
 	String token;
-	String companyId;
+	String receiveId;
 
 	/**
 	 * 构造函数
 	 * @param token 服务商后台，开发者设置的token
 	 * @param encodingAesKey 服务商后台，开发者设置的EncodingAESKey
-	 * @param companyId, 服务商后台可见， 公司ID
+	 * @param receiveId, 服务商后台可见， clientID
 	 * @throws BizException 执行失败，请查看该异常的错误码和具体的错误信息
 	 */
-	public BizMsgCrypt(String token, String encodingAesKey, String companyId) throws BizException {
+	public BizMsgCrypt(String token, String encodingAesKey, String receiveId) throws BizException {
 		if (encodingAesKey.length() != 43) {
 			throw new BizException(BizErrorCodeEnum.IllegalAesKey);
 		}
 
 		this.token = token;
-		this.companyId = companyId;
+		this.receiveId = receiveId;
 		aesKey = Base64.decodeBase64(encodingAesKey + "=");
 	}
 
@@ -93,13 +93,13 @@ public class BizMsgCrypt {
 		byte[] randomStrBytes = randomStr.getBytes(CHARSET);
 		byte[] textBytes = text.getBytes(CHARSET);
 		byte[] networkBytesOrder = getNetworkBytesOrder(textBytes.length);
-		byte[] companyIdBytes = companyId.getBytes(CHARSET);
+		byte[] receiveIdBytes = receiveId.getBytes(CHARSET);
 
-		// randomStr + networkBytesOrder + text + companyId
+		// randomStr + networkBytesOrder + text + receiveId
 		byteCollector.addBytes(randomStrBytes);
 		byteCollector.addBytes(networkBytesOrder);
 		byteCollector.addBytes(textBytes);
-		byteCollector.addBytes(companyIdBytes);
+		byteCollector.addBytes(receiveIdBytes);
 
 		// ... + pad: 使用自定义的填充方式对明文进行补位填充
 		byte[] padBytes = PKCS7Encoder.encode(byteCollector.size());
@@ -154,27 +154,27 @@ public class BizMsgCrypt {
 			throw new BizException(BizErrorCodeEnum.DecryptAESError);
 		}
 
-		String jsonContent, fromCompanyId;
+		String jsonContent, fromReceiveId;
 		try {
 			// 去除补位字符
 			byte[] bytes = PKCS7Encoder.decode(original);
 
-			// 分离16位随机字符串,网络字节序和companyId
+			// 分离16位随机字符串,网络字节序和receiveId
 			byte[] networkOrder = Arrays.copyOfRange(bytes, 16, 20);
 
 			int jsonLength = recoverNetworkBytesOrder(networkOrder);
 
 			jsonContent = new String(Arrays.copyOfRange(bytes, 20, 20 + jsonLength), CHARSET);
-			fromCompanyId = new String(Arrays.copyOfRange(bytes, 20 + jsonLength, bytes.length),
+			fromReceiveId = new String(Arrays.copyOfRange(bytes, 20 + jsonLength, bytes.length),
 					CHARSET);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new BizException(BizErrorCodeEnum.IllegalBuffer);
 		}
 
-		// companyId不相同的情况
-		if (!fromCompanyId.equals(companyId)) {
-			throw new BizException(BizErrorCodeEnum.ValidateCompanyIdError);
+		// receiveId不相同的情况
+		if (!fromReceiveId.equals(receiveId)) {
+			throw new BizException(BizErrorCodeEnum.ValidateReceiveIdError);
 		}
 		return jsonContent;
 
@@ -256,9 +256,9 @@ public class BizMsgCrypt {
 	 * @param msgSignature 签名串，对应URL参数的msg_signature
 	 * @param timeStamp 时间戳，对应URL参数的timestamp
 	 * @param nonce 随机串，对应URL参数的nonce
-	 * @param echoStr 随机串，对应URL参数的echostr
+	 * @param echoStr 随机串，对应URL参数的echoStr
 	 * 
-	 * @return 解密之后的echostr
+	 * @return 解密之后的echoStr
 	 * @throws BizException 执行失败，请查看该异常的错误码和具体的错误信息
 	 */
 	public String VerifyURL(String msgSignature, String timeStamp, String nonce, String echoStr)
